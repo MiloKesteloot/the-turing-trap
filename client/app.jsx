@@ -17,15 +17,15 @@ const MODEL_DISPLAY = {
 };
 
 // ─── Avatar Component ───
-function Avatar({ playerNumber, model, revealed, size = 36 }) {
+function Avatar({ playerNumber, model, size = 36 }) {
   const color = PLAYER_COLORS[playerNumber];
-  if (revealed && model) {
+  if (model) {
     const info = MODEL_DISPLAY[model] || MODEL_DISPLAY.human;
     return (
       <img
         src={info.icon}
         alt={info.name}
-        style={{ width: size, height: size, borderRadius: '50%', border: `2px solid ${info.color}` }}
+        style={{ width: size, height: size, borderRadius: '50%', border: `2px solid ${info.color}`, flexShrink: 0 }}
       />
     );
   }
@@ -67,14 +67,15 @@ function TypingIndicator({ playerNumber }) {
 }
 
 // ─── Chat Message ───
-function ChatMessage({ msg, humanPlayerNumber }) {
+function ChatMessage({ msg, humanPlayerNumber, playerModels }) {
   const isHuman = msg.playerNumber === humanPlayerNumber;
   const color = PLAYER_COLORS[msg.playerNumber];
+  const model = playerModels?.[msg.playerNumber] || null;
 
   return (
     <div className={`flex ${isHuman ? 'justify-end' : 'justify-start'} px-4 py-1 msg-enter`}>
       <div className={`flex gap-2 max-w-[75%] ${isHuman ? 'flex-row-reverse' : 'flex-row'}`}>
-        <Avatar playerNumber={msg.playerNumber} size={32} />
+        <Avatar playerNumber={msg.playerNumber} model={model} size={32} />
         <div>
           <div className={`text-xs mb-0.5 ${isHuman ? 'text-right' : 'text-left'}`} style={{ color }}>
             Player {msg.playerNumber}
@@ -103,14 +104,15 @@ function SystemMessage({ msg }) {
 }
 
 // ─── Vote Message ───
-function VoteMessage({ msg }) {
+function VoteMessage({ msg, playerModels }) {
   const voterColor = PLAYER_COLORS[msg.playerNumber];
   const targetColor = PLAYER_COLORS[msg.votedFor];
+  const model = playerModels?.[msg.playerNumber] || null;
 
   return (
     <div className="flex justify-start px-4 py-1 msg-enter">
       <div className="flex gap-2 max-w-[80%]">
-        <Avatar playerNumber={msg.playerNumber} size={32} />
+        <Avatar playerNumber={msg.playerNumber} model={model} size={32} />
         <div>
           <div className="text-xs mb-0.5" style={{ color: voterColor }}>
             Player {msg.playerNumber}
@@ -188,12 +190,13 @@ function VoteSummaryCard({ data }) {
 }
 
 // ─── Tiebreaker Message ───
-function TiebreakerMessage({ msg }) {
+function TiebreakerMessage({ msg, playerModels }) {
   const color = PLAYER_COLORS[msg.playerNumber];
+  const model = playerModels?.[msg.playerNumber] || null;
   return (
     <div className="flex justify-start px-4 py-1 msg-enter">
       <div className="flex gap-2 max-w-[85%]">
-        <Avatar playerNumber={msg.playerNumber} size={32} />
+        <Avatar playerNumber={msg.playerNumber} model={model} size={32} />
         <div>
           <div className="text-xs mb-0.5" style={{ color }}>
             Player {msg.playerNumber} <span className="opacity-50">(tiebreaker)</span>
@@ -245,18 +248,18 @@ function EliminationMessage({ msg }) {
 }
 
 // ─── Message Renderer ───
-function Message({ msg, humanPlayerNumber }) {
+function Message({ msg, humanPlayerNumber, playerModels }) {
   switch (msg.type) {
     case 'chat':
-      return <ChatMessage msg={msg} humanPlayerNumber={humanPlayerNumber} />;
+      return <ChatMessage msg={msg} humanPlayerNumber={humanPlayerNumber} playerModels={playerModels} />;
     case 'system':
       return <SystemMessage msg={msg} />;
     case 'vote':
-      return <VoteMessage msg={msg} />;
+      return <VoteMessage msg={msg} playerModels={playerModels} />;
     case 'vote-summary':
       return <VoteSummaryCard data={msg.data} />;
     case 'tiebreaker':
-      return <TiebreakerMessage msg={msg} />;
+      return <TiebreakerMessage msg={msg} playerModels={playerModels} />;
     case 'elimination':
       return <EliminationMessage msg={msg} />;
     default:
@@ -456,6 +459,10 @@ function App() {
     return <StartScreen onPlay={startGame} />;
   }
 
+  const playerModels = {};
+  players.forEach(p => { if (p.model) playerModels[p.number] = p.model; });
+  if (humanPlayerNumber) playerModels[humanPlayerNumber] = 'human';
+
   return (
     <div className="h-screen flex flex-col" style={{ backgroundColor: '#0a0a0f' }}>
       {/* Top Bar */}
@@ -488,7 +495,7 @@ function App() {
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto py-3" style={{ backgroundColor: '#0a0a0f' }}>
         {messages.map((msg, i) => (
-          <Message key={i} msg={msg} humanPlayerNumber={humanPlayerNumber} />
+          <Message key={i} msg={msg} humanPlayerNumber={humanPlayerNumber} playerModels={playerModels} />
         ))}
 
         {typingPlayers.map(pn => (

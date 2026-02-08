@@ -846,6 +846,7 @@ io.on('connection', (socket) => {
       players: game.players.map(p => ({
         number: p.number,
         type: p.type === 'human' ? 'human' : 'ai',
+        model: p.model,
         alive: p.alive,
       })),
       topic: game.topic,

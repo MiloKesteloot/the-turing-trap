@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Turing Trap</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: '#12121a',
+            bubble: '#1e1e2e',
+            accent: '#00d4ff',
+          },
+          fontFamily: {
+            mono: ['"JetBrains Mono"', 'Consolas', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      background: #0a0a0f;
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      color: #e0e0e0;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .msg-enter { animation: fadeIn 0.3s ease-out; }
+    @keyframes pulse { 0%, 80%, 100% { opacity: 0.3; } 40% { opacity: 1; } }
+    .typing-dot { animation: pulse 1.4s infinite; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes glitch {
+      0%, 100% { text-shadow: 2px 0 #00d4ff, -2px 0 #ff0055; }
+      25% { text-shadow: -2px -1px #00d4ff, 2px 1px #ff0055; }
+      50% { text-shadow: 1px 2px #00d4ff, -1px -2px #ff0055; }
+      75% { text-shadow: -1px 1px #00d4ff, 1px -1px #ff0055; }
+    }
+    .glitch-text { animation: glitch 3s infinite; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="text/babel" src="app.jsx"></script>
+</body>
+</html>

@@ -54,11 +54,24 @@ const TOPICS = [
 
 const AI_MODELS = ['chatgpt', 'gemini', 'claude', 'grok'];
 
-const ROUND_DURATION = 60;
+// Load editable game settings from config.json
+const fs = require('fs');
+function loadConfig() {
+  const raw = fs.readFileSync(path.join(__dirname, '..', 'config.json'), 'utf-8');
+  return JSON.parse(raw);
+}
+
+function getConfig() {
+  const cfg = loadConfig();
+  return {
+    ROUND_DURATION: cfg.round_length_seconds,
+    AI_TIMER_MIN: cfg.ai_min_response_time_seconds * 1000,
+    AI_TIMER_MAX: cfg.ai_max_response_time_seconds * 1000,
+    SILENCE_BREAKER_DELAY: cfg.silence_before_ai_starts_seconds * 1000,
+  };
+}
+
 const TIEBREAKER_DURATION = 15;
-const AI_TIMER_MIN = 5000;
-const AI_TIMER_MAX = 20000;
-const SILENCE_BREAKER_DELAY = 5000;
 const VOTE_REVEAL_DELAY = 1500;
 
 // --------------- Game State ---------------
@@ -96,7 +109,7 @@ function createGame() {
     topic,
     usedTopics,
     messages: [],
-    timer: ROUND_DURATION,
+    timer: getConfig().ROUND_DURATION,
     timerInterval: null,
     aiTimers: {},
     aiInFlight: {},
@@ -181,8 +194,8 @@ ${history}
 
 The conversation round is over. Based on the chat history, you must vote for the player you think is the human. You MUST vote for someone other than yourself (Player ${playerNumber}). The other players are: ${aliveOthers}.
 
-Respond in exactly this format:
-"I vote for Player [number]! [Your reasoning in 1-2 sentences]"`;
+Respond in exactly this format (do not wrap your response in quotation marks):
+I vote for Player [number]! [Your reasoning in 1-2 sentences]`;
 }
 
 function buildTiebreakerPrompt(playerNumber, tiedPlayerNumbers) {
@@ -208,8 +221,8 @@ function buildTiebreakerVotePrompt(playerNumber, tiedPlayerNumbers) {
 
 You must now vote to eliminate one of the tied players: ${tiedNames}. You MUST vote for someone other than yourself (Player ${playerNumber}).
 
-Respond in exactly this format:
-"I vote for Player [number]! [Your reasoning in 1-2 sentences]"`;
+Respond in exactly this format (do not wrap your response in quotation marks):
+I vote for Player [number]! [Your reasoning in 1-2 sentences]`;
 }
 
 // --------------- AI API Calls ---------------
@@ -294,7 +307,7 @@ async function callGrok(systemPrompt, userPrompt) {
 // --------------- Game Timer ---------------
 
 function startRoundTimer() {
-  game.timer = ROUND_DURATION;
+  game.timer = getConfig().ROUND_DURATION;
   io.emit('timer-update', game.timer);
 
   game.timerInterval = setInterval(() => {
@@ -340,7 +353,8 @@ function scheduleAITimer(playerNumber) {
   const player = game.players.find(p => p.number === playerNumber);
   if (!player || !player.alive || player.type !== 'ai') return;
 
-  const delay = AI_TIMER_MIN + Math.random() * (AI_TIMER_MAX - AI_TIMER_MIN);
+  const cfg = getConfig();
+  const delay = cfg.AI_TIMER_MIN + Math.random() * (cfg.AI_TIMER_MAX - cfg.AI_TIMER_MIN);
   game.aiTimers[playerNumber] = setTimeout(() => triggerAIMessage(playerNumber), delay);
 }
 
@@ -404,7 +418,7 @@ function startAITimers() {
         triggerAIMessage(randomAI.number);
       }
     }
-  }, SILENCE_BREAKER_DELAY);
+  }, getConfig().SILENCE_BREAKER_DELAY);
 }
 
 // --------------- Vote Phase ---------------
@@ -421,7 +435,7 @@ async function startVotePhase() {
 
   io.emit('phase-change', { phase: 'voting' });
 
-  const systemMsg = { type: 'system', text: "Time's up! The AIs are deliberating...", timestamp: Date.now() };
+  const systemMsg = { type: 'system', text: "Time's up! The AIs are voting...", timestamp: Date.now() };
   game.messages.push(systemMsg);
   io.emit('new-message', systemMsg);
 
@@ -453,7 +467,7 @@ async function startVotePhase() {
 
     game.votes[result.playerNumber] = {
       votedFor,
-      text: result.response,
+      text: result.response.replace(/^["']+|["']+$/g, ''),
     };
   }
 
@@ -615,7 +629,7 @@ async function startTiebreaker(tiedPlayerNumbers) {
         votedFor = validTargets[Math.floor(Math.random() * validTargets.length)];
       }
 
-      tbVotes[result.playerNumber] = { votedFor, text: result.response };
+      tbVotes[result.playerNumber] = { votedFor, text: result.response.replace(/^["']+|["']+$/g, '') };
     }
   } else {
     // All remaining players are tied — tied players vote for each other
@@ -640,7 +654,7 @@ async function startTiebreaker(tiedPlayerNumbers) {
         votedFor = validTargets[Math.floor(Math.random() * validTargets.length)];
       }
 
-      tbVotes[result.playerNumber] = { votedFor, text: result.response };
+      tbVotes[result.playerNumber] = { votedFor, text: result.response.replace(/^["']+|["']+$/g, '') };
     }
   }
 
@@ -851,6 +865,7 @@ io.on('connection', (socket) => {
       })),
       topic: game.topic,
       round: game.round,
+      roundDuration: getConfig().ROUND_DURATION,
     });
 
     startRoundTimer();

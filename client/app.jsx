@@ -121,11 +121,12 @@ function VoteMessage({ msg, playerModels }) {
             className="px-3 py-2 rounded-xl text-sm leading-relaxed"
             style={{ backgroundColor: '#1a1a2e', border: '1px solid #ff005533', color: '#e0e0e0' }}
           >
+            <span>I am voting for </span>
             <span style={{ color: targetColor, fontWeight: 600 }}>
-              &#x1F5F3; Player {msg.votedFor}
+              Player {msg.votedFor}
             </span>
-            <span className="ml-1 opacity-70">
-              — {msg.text.replace(/I vote for Player \d+!?\s*/i, '')}
+            <span className="opacity-70">
+              {' — '}{msg.text.replace(/^["']?I vote for Player \d+!?\s*["']?\s*/i, '').replace(/^["']+|["']+$/g, '')}
             </span>
           </div>
         </div>
@@ -161,7 +162,8 @@ function VoteSummaryCard({ data }) {
             {Object.entries(counts).map(([player, count]) => (
               <div key={player} className="text-xs">
                 <span style={{ color: PLAYER_COLORS[parseInt(player)] }}>P{player}</span>
-                <span className="ml-1 opacity-70">{count} vote{count !== 1 ? 's' : ''}</span>
+                <span className="mx-1 opacity-70">—</span>
+                <span className="opacity-70">{count} vote{count !== 1 ? 's' : ''}</span>
               </div>
             ))}
           </div>
@@ -297,21 +299,26 @@ function StartScreen({ onPlay }) {
 
 // ─── Top Bar ───
 function TopBar({ round, timer, topic, phase }) {
-  const timerColor = timer <= 10 ? '#ff0055' : timer <= 20 ? '#ffe66d' : '#00d4ff';
+  const timerColor = timer <= 10 ? '#ff0055' : timer <= 30 ? '#ffe66d' : '#00d4ff';
+  const minutes = Math.floor(timer / 60);
+  const seconds = timer % 60;
+  const timerDisplay = phase === 'tiebreaker'
+    ? `${timer}s`
+    : `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
   return (
     <div
-      className="flex items-center justify-between px-4 py-2 border-b"
+      className="flex items-center justify-between px-6 py-3 border-b"
       style={{ backgroundColor: '#0e0e18', borderColor: '#222' }}
     >
-      <div className="text-xs font-bold" style={{ color: '#00d4ff' }}>
+      <div className="text-sm font-bold" style={{ color: '#00d4ff' }}>
         ROUND {round}
       </div>
-      <div className="text-xs text-center flex-1 mx-4 opacity-60 truncate">
+      <div className="text-sm text-center flex-1 mx-6 opacity-70">
         {topic}
       </div>
-      <div className="text-sm font-bold tabular-nums" style={{ color: timerColor }}>
-        {phase === 'tiebreaker' ? `${timer}s` : `${timer}s`}
+      <div className="text-lg font-bold tabular-nums" style={{ color: timerColor }}>
+        {timerDisplay}
       </div>
     </div>
   );
@@ -323,7 +330,7 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [humanPlayerNumber, setHumanPlayerNumber] = useState(null);
   const [players, setPlayers] = useState([]);
-  const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(150);
   const [round, setRound] = useState(1);
   const [topic, setTopic] = useState('');
   const [typingPlayers, setTypingPlayers] = useState([]);
@@ -353,7 +360,7 @@ function App() {
       setPlayers(data.players);
       setTopic(data.topic);
       setRound(data.round);
-      setTimer(60);
+      setTimer(data.roundDuration || 150);
       setMessages([]);
       setGameResult(null);
       setInputDisabled(false);

@@ -16,36 +16,20 @@ app.use(express.static(path.join(__dirname, '..', 'client')));
 
 // --------------- AI Clients ---------------
 
-// const openai = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_key_here'
-//   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-//   : null;
-
-// const geminiAI = process.env.GOOGLE_GEMINI_API_KEY && process.env.GOOGLE_GEMINI_API_KEY !== 'your_key_here'
-//   ? new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY)
-//   : null;
-
-// const anthropic = process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'your_key_here'
-//   ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-//   : null;
-
-// const grokClient = process.env.XAI_API_KEY && process.env.XAI_API_KEY !== 'your_key_here'
-//   ? new OpenAI({ apiKey: process.env.XAI_API_KEY, baseURL: 'https://api.x.ai/v1' })
-//   : null;
-
 const openai = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_key_here'
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  ? new OpenAI.default({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
-const geminiAI = openai = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_key_here'
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const geminiAI = process.env.GOOGLE_GEMINI_API_KEY && process.env.GOOGLE_GEMINI_API_KEY !== 'your_key_here'
+  ? new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY)
   : null;
 
-const anthropic = openai = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_key_here'
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const anthropic = process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'your_key_here'
+  ? new Anthropic.default({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
 
-const grokClient = openai = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_key_here'
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const grokClient = process.env.XAI_API_KEY && process.env.XAI_API_KEY !== 'your_key_here'
+  ? new OpenAI.default({ apiKey: process.env.XAI_API_KEY, baseURL: 'https://api.x.ai/v1' })
   : null;
 
 // --------------- Constants ---------------
@@ -285,7 +269,7 @@ async function callGemini(systemPrompt, userPrompt) {
 async function callClaude(systemPrompt, userPrompt) {
   if (!anthropic) return fallbackResponse();
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-haiku-latest',
+    model: 'claude-3-haiku-20240307',
     max_tokens: 150,
     system: systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],
@@ -296,7 +280,7 @@ async function callClaude(systemPrompt, userPrompt) {
 async function callGrok(systemPrompt, userPrompt) {
   if (!grokClient) return fallbackResponse();
   const response = await grokClient.chat.completions.create({
-    model: 'grok-2-latest',
+    model: 'grok-4',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
@@ -711,10 +695,6 @@ async function startTiebreaker(tiedPlayerNumbers) {
       await eliminatePlayer(playerNum);
       if (game && game.phase === 'gameover') return;
     }
-    // After all tiebreaker eliminations, start next round if game continues
-    if (game && game.phase !== 'gameover') {
-      await startNextRound();
-    }
   } else {
     const tbSummary = {
       type: 'vote-summary',
@@ -731,10 +711,6 @@ async function startTiebreaker(tiedPlayerNumbers) {
     await delay(1500);
 
     await eliminatePlayer(stillTied[0]);
-    // After tiebreaker elimination, start next round if game continues
-    if (game && game.phase !== 'gameover') {
-      await startNextRound();
-    }
   }
 }
 
@@ -745,13 +721,6 @@ async function eliminatePlayer(playerNumber) {
   if (!player) return;
 
   player.alive = false;
-
-  // Notify client of updated player status
-  io.emit('player-update', game.players.map(p => ({
-    number: p.number,
-    type: p.type === 'human' ? 'human' : 'ai',
-    alive: p.alive,
-  })));
 
   const isHuman = player.type === 'human';
   const revealName = isHuman ? 'THE HUMAN' : getModelDisplayName(player.model);

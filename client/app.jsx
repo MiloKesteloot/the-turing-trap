@@ -9,10 +9,10 @@ const PLAYER_COLORS = {
 };
 
 const MODEL_DISPLAY = {
-  chatgpt: { name: 'ChatGPT', color: '#10a37f', icon: '/assets/chatgpt.svg' },
-  gemini: { name: 'Gemini', color: '#4285f4', icon: '/assets/gemini.svg' },
-  claude: { name: 'Claude', color: '#d4a574', icon: '/assets/claude.svg' },
-  grok: { name: 'Grok', color: '#ffffff', icon: '/assets/grok.svg' },
+  chatgpt: { name: 'ChatGPT', color: '#10a37f', icon: '/assets/chatgpt.png' },
+  gemini: { name: 'Gemini', color: '#4285f4', icon: '/assets/gemini.png' },
+  claude: { name: 'Claude', color: '#d4a574', icon: '/assets/claude.png' },
+  grok: { name: 'Grok', color: '#ffffff', icon: '/assets/grok.png' },
   human: { name: 'THE HUMAN', color: '#ff0055', icon: '/assets/human.svg' },
 };
 

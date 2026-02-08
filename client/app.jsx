@@ -74,7 +74,7 @@ function ChatMessage({ msg, humanPlayerNumber, playerModels }) {
 
   return (
     <div className={`flex ${isHuman ? 'justify-end' : 'justify-start'} px-4 py-1 msg-enter`}>
-      <div className={`flex gap-2 max-w-[75%] ${isHuman ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div className={`flex items-start gap-2 max-w-[75%] ${isHuman ? 'flex-row-reverse' : 'flex-row'}`}>
         <Avatar playerNumber={msg.playerNumber} model={model} size={32} />
         <div>
           <div className={`text-xs mb-0.5 ${isHuman ? 'text-right' : 'text-left'}`} style={{ color }}>
@@ -111,7 +111,7 @@ function VoteMessage({ msg, playerModels }) {
 
   return (
     <div className="flex justify-start px-4 py-1 msg-enter">
-      <div className="flex gap-2 max-w-[80%]">
+      <div className="flex items-start gap-2 max-w-[80%]">
         <Avatar playerNumber={msg.playerNumber} model={model} size={32} />
         <div>
           <div className="text-xs mb-0.5" style={{ color: voterColor }}>
@@ -197,7 +197,7 @@ function TiebreakerMessage({ msg, playerModels }) {
   const model = playerModels?.[msg.playerNumber] || null;
   return (
     <div className="flex justify-start px-4 py-1 msg-enter">
-      <div className="flex gap-2 max-w-[85%]">
+      <div className="flex items-start gap-2 max-w-[85%]">
         <Avatar playerNumber={msg.playerNumber} model={model} size={32} />
         <div>
           <div className="text-xs mb-0.5" style={{ color }}>
@@ -311,13 +311,13 @@ function TopBar({ round, timer, topic, phase }) {
       className="flex items-center justify-between px-6 py-3 border-b"
       style={{ backgroundColor: '#0e0e18', borderColor: '#222' }}
     >
-      <div className="text-sm font-bold" style={{ color: '#00d4ff' }}>
+      <div className="text-base font-bold" style={{ color: '#00d4ff' }}>
         ROUND {round}
       </div>
-      <div className="text-sm text-center flex-1 mx-6 opacity-70">
+      <div className="text-base text-center flex-1 mx-6" style={{ color: '#c8cfd8' }}>
         {topic}
       </div>
-      <div className="text-lg font-bold tabular-nums" style={{ color: timerColor }}>
+      <div className="text-xl font-bold tabular-nums" style={{ color: timerColor }}>
         {timerDisplay}
       </div>
     </div>

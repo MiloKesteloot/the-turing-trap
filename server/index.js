@@ -228,6 +228,7 @@ I vote for Player [number]! [Your reasoning in 1-2 sentences]`;
 // --------------- AI API Calls ---------------
 
 async function callAI(model, systemPrompt, userPrompt) {
+  if (loadConfig().testing_mode) return fallbackResponse();
   try {
     switch (model) {
       case 'chatgpt': return await callChatGPT(systemPrompt, userPrompt);
@@ -709,6 +710,9 @@ async function startTiebreaker(tiedPlayerNumbers) {
       await eliminatePlayer(playerNum);
       if (game && game.phase === 'gameover') return;
     }
+    if (game && game.phase !== 'gameover') {
+      await startNextRound();
+    }
   } else {
     const tbSummary = {
       type: 'vote-summary',
@@ -725,6 +729,9 @@ async function startTiebreaker(tiedPlayerNumbers) {
     await delay(1500);
 
     await eliminatePlayer(stillTied[0]);
+    if (game && game.phase !== 'gameover') {
+      await startNextRound();
+    }
   }
 }
 

@@ -12,6 +12,12 @@ const MODEL_DISPLAY = {
   human: { name: 'THE HUMAN', color: '#ff0055', icon: '/assets/human.svg' },
 };
 
+function formatPlayerList(names) {
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
+}
+
 // ─── Avatar Component ───
 function Avatar({ playerNumber, model, size = 36 }) {
   const color = PLAYER_COLORS[playerNumber] || '#888';
@@ -146,7 +152,7 @@ function VoteSummaryCard({ data }) {
           {votes.map((v, i) => (
             <div key={i} className="flex items-center justify-between text-xs">
               <span style={{ color: PLAYER_COLORS[v.voter] }}>Player {v.voter}</span>
-              <span className="opacity-40">→</span>
+              <span className="opacity-40" style={{ fontSize: '1.5em' }}>→</span>
               <span style={{ color: PLAYER_COLORS[v.votedFor] }}>Player {v.votedFor}</span>
             </div>
           ))}
@@ -168,7 +174,7 @@ function VoteSummaryCard({ data }) {
         <div className="border-t border-gray-700 pt-2 text-center text-sm font-bold">
           {result === 'tie' && (
             <span style={{ color: '#ffe66d' }}>
-              TIE — {tiedPlayers.map(n => `Player ${n}`).join(' & ')}
+              TIE — {formatPlayerList(tiedPlayers.map(n => `Player ${n}`))}
             </span>
           )}
           {result === 'eliminated' && (
@@ -178,7 +184,7 @@ function VoteSummaryCard({ data }) {
           )}
           {result === 'all-eliminated' && (
             <span style={{ color: '#ff0055' }}>
-              {(Array.isArray(eliminated) ? eliminated : [eliminated]).map(n => `Player ${n}`).join(' & ')} eliminated!
+              {formatPlayerList((Array.isArray(eliminated) ? eliminated : [eliminated]).map(n => `Player ${n}`))} eliminated!
             </span>
           )}
         </div>

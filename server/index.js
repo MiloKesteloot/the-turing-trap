@@ -154,6 +154,12 @@ function getActivePlayerNames() {
   return getAlivePlayers().map(p => `Player ${p.number}`).join(', ');
 }
 
+function formatPlayerList(names) {
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
+}
+
 function buildChatHistoryText() {
   return game.messages
     .filter(m => m.type === 'chat')
@@ -548,7 +554,7 @@ async function startVotePhase() {
 async function startTiebreaker(tiedPlayerNumbers) {
   game.phase = 'tiebreaker';
 
-  const tiedNames = tiedPlayerNumbers.map(n => `Player ${n}`).join(', ');
+  const tiedNames = formatPlayerList(tiedPlayerNumbers.map(n => `Player ${n}`));
   const sysMsg = {
     type: 'system',
     text: `It's a tie between ${tiedNames}! All tied players must prove they're an AI in 15 seconds.`,
@@ -716,13 +722,12 @@ async function startTiebreaker(tiedPlayerNumbers) {
     io.emit('new-message', tbSummary);
     await delay(1500);
 
+    // Reveal all eliminated players before checking win/loss conditions
     for (const playerNum of stillTied) {
-      await eliminatePlayer(playerNum);
-      if (game && game.phase === 'gameover') return;
+      await revealElimination(playerNum);
     }
-    if (game && game.phase !== 'gameover') {
-      await startNextRound();
-    }
+    // Now check game state after all reveals
+    await checkPostElimination();
   } else {
     const tbSummary = {
       type: 'vote-summary',
@@ -746,6 +751,61 @@ async function startTiebreaker(tiedPlayerNumbers) {
 }
 
 // --------------- Elimination ---------------
+
+async function revealElimination(playerNumber) {
+  const player = game.players.find(p => p.number === playerNumber);
+  if (!player) return;
+
+  player.alive = false;
+
+  const isHuman = player.type === 'human';
+  const revealName = isHuman ? 'THE HUMAN' : getModelDisplayName(player.model);
+
+  const elimMsg = {
+    type: 'elimination',
+    playerNumber,
+    revealName,
+    model: player.model,
+    isHuman,
+    timestamp: Date.now(),
+  };
+  game.messages.push(elimMsg);
+  io.emit('new-message', elimMsg);
+
+  await delay(2000);
+}
+
+async function checkPostElimination() {
+  const human = game.players.find(p => p.type === 'human');
+  if (!human.alive) {
+    game.phase = 'gameover';
+    const goMsg = {
+      type: 'system',
+      text: "You've been detected! Game over.",
+      timestamp: Date.now(),
+    };
+    game.messages.push(goMsg);
+    io.emit('new-message', goMsg);
+    io.emit('game-over', { result: 'lose' });
+    return;
+  }
+
+  const alivePlayers = getAlivePlayers();
+  if (alivePlayers.length <= 2) {
+    game.phase = 'gameover';
+    const winMsg = {
+      type: 'system',
+      text: "You fooled the AIs! You survived The Turing Trap.",
+      timestamp: Date.now(),
+    };
+    game.messages.push(winMsg);
+    io.emit('new-message', winMsg);
+    io.emit('game-over', { result: 'win' });
+    return;
+  }
+
+  await startNextRound();
+}
 
 async function eliminatePlayer(playerNumber) {
   const player = game.players.find(p => p.number === playerNumber);

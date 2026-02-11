@@ -12,6 +12,12 @@ const MODEL_DISPLAY = {
   human: { name: 'THE HUMAN', color: '#ff0055', icon: '/assets/human.svg' },
 };
 
+// Preload all avatar images
+Object.values(MODEL_DISPLAY).forEach(m => {
+  const img = new Image();
+  img.src = m.icon;
+});
+
 function formatPlayerList(names) {
   if (names.length === 1) return names[0];
   if (names.length === 2) return `${names[0]} and ${names[1]}`;

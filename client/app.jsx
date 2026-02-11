@@ -345,18 +345,20 @@ function TopBar({ round, timer, topic, phase }) {
     : `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
   return (
-    <div
-      className="flex items-center justify-between px-6 py-3 border-b"
-      style={{ backgroundColor: '#0e0e18', borderColor: '#222' }}
-    >
-      <div className="text-base font-bold" style={{ color: '#00d4ff' }}>
-        ROUND {round}
+    <div className="border-b" style={{ backgroundColor: '#0e0e18', borderColor: '#222' }}>
+      <div className="flex items-center justify-between px-6 py-3">
+        <div className="text-base font-bold" style={{ color: '#00d4ff' }}>
+          ROUND {round}
+        </div>
+        <div className="topbar-topic text-base text-center flex-1 mx-6" style={{ color: '#c8cfd8' }}>
+          {topic}
+        </div>
+        <div className="text-xl font-bold tabular-nums" style={{ color: timerColor }}>
+          {timerDisplay}
+        </div>
       </div>
-      <div className="text-base text-center flex-1 mx-6" style={{ color: '#c8cfd8' }}>
+      <div className="topbar-topic-mobile px-4 pb-2 text-sm text-center" style={{ color: '#c8cfd8', display: 'none' }}>
         {topic}
-      </div>
-      <div className="text-xl font-bold tabular-nums" style={{ color: timerColor }}>
-        {timerDisplay}
       </div>
     </div>
   );

@@ -50,6 +50,10 @@
     .glitch-text { animation: glitch 3s infinite; }
     @keyframes votingPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.6; } }
     .voting-pulse { animation: votingPulse 1.5s ease-in-out infinite; }
+    @media (max-width: 640px) {
+      .topbar-topic { display: none !important; }
+      .topbar-topic-mobile { display: block !important; }
+    }
   </style>
 </head>
 <body>

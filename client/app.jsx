@@ -27,7 +27,7 @@ function Avatar({ playerNumber, model, size = 36 }) {
       <img
         src={info.icon}
         alt={info.name}
-        style={{ width: size, height: size, borderRadius: '50%', border: `2px solid ${color}`, flexShrink: 0 }}
+        style={{ width: size, height: size, minWidth: size, minHeight: size, borderRadius: '50%', border: `2px solid ${color}`, flexShrink: 0, objectFit: 'cover' }}
       />
     );
   }
@@ -36,6 +36,8 @@ function Avatar({ playerNumber, model, size = 36 }) {
       style={{
         width: size,
         height: size,
+        minWidth: size,
+        minHeight: size,
         borderRadius: '50%',
         backgroundColor: color + '22',
         border: `2px solid ${color}`,
@@ -77,16 +79,16 @@ function ChatMessage({ msg, humanPlayerNumber, playerModels }) {
   return (
     <div className={`flex ${isHuman ? 'justify-end' : 'justify-start'} px-4 py-1 msg-enter`}>
       <div className={`flex items-start gap-2 max-w-[75%] ${isHuman ? 'flex-row-reverse' : 'flex-row'}`}>
-        <div className={isHuman ? "chat-avatar-human" : "chat-avatar msg-avatar"}>
+        <div className={isHuman ? "chat-avatar-human" : "chat-avatar msg-avatar"} style={{ flexShrink: 0 }}>
           <Avatar playerNumber={msg.playerNumber} model={model} size={40} />
         </div>
-        <div>
+        <div style={{ minWidth: 0, overflow: 'hidden' }}>
           <div className={`text-xs mb-0.5 ${isHuman ? 'text-right' : 'text-left'}`} style={{ color }}>
             Player {msg.playerNumber}
           </div>
           <div
             className="px-3 py-2 rounded-xl text-sm leading-relaxed"
-            style={{ backgroundColor: '#1e1e2e', color: '#e0e0e0' }}
+            style={{ backgroundColor: '#1e1e2e', color: '#e0e0e0', overflowWrap: 'break-word', wordBreak: 'break-word' }}
           >
             {msg.text}
           </div>
@@ -116,16 +118,16 @@ function VoteMessage({ msg, playerModels }) {
   return (
     <div className="flex justify-start px-4 py-1 msg-enter">
       <div className="flex items-start gap-2 max-w-[80%]">
-        <div className="msg-avatar">
+        <div className="msg-avatar" style={{ flexShrink: 0 }}>
           <Avatar playerNumber={msg.playerNumber} model={model} size={40} />
         </div>
-        <div>
+        <div style={{ minWidth: 0, overflow: 'hidden' }}>
           <div className="text-xs mb-0.5" style={{ color: voterColor }}>
             Player {msg.playerNumber}
           </div>
           <div
             className="px-3 py-2 rounded-xl text-sm leading-relaxed"
-            style={{ backgroundColor: '#1a1a2e', border: '1px solid #ff005533', color: '#e0e0e0' }}
+            style={{ backgroundColor: '#1a1a2e', border: '1px solid #ff005533', color: '#e0e0e0', overflowWrap: 'break-word', wordBreak: 'break-word' }}
           >
             <span>I am voting for </span>
             <span style={{ color: targetColor, fontWeight: 600 }}>
@@ -204,16 +206,16 @@ function TiebreakerMessage({ msg, playerModels }) {
   return (
     <div className="flex justify-start px-4 py-1 msg-enter">
       <div className="flex items-start gap-2 max-w-[85%]">
-        <div className="msg-avatar">
+        <div className="msg-avatar" style={{ flexShrink: 0 }}>
           <Avatar playerNumber={msg.playerNumber} model={model} size={40} />
         </div>
-        <div>
+        <div style={{ minWidth: 0, overflow: 'hidden' }}>
           <div className="text-xs mb-0.5" style={{ color }}>
             Player {msg.playerNumber} <span className="opacity-50">(tiebreaker)</span>
           </div>
           <div
             className="px-3 py-2 rounded-xl text-sm leading-relaxed italic"
-            style={{ backgroundColor: '#1a1a2e', border: '1px solid #ffe66d33', color: '#e0e0e0' }}
+            style={{ backgroundColor: '#1a1a2e', border: '1px solid #ffe66d33', color: '#e0e0e0', overflowWrap: 'break-word', wordBreak: 'break-word' }}
           >
             {msg.text}
           </div>

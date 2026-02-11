@@ -270,13 +270,14 @@ async function callAI(model, systemPrompt, userPrompt) {
 
 function fallbackResponse() {
   const fallbacks = [
+    "blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah",
     "hmm interesting point",
-    "yeah I can see that",
-    "not sure I agree tbh",
-    "lol fair enough",
-    "that's a good question actually",
-    "I think there's more to it than that",
-    "hard to say really",
+    // "yeah I can see that",
+    // "not sure I agree tbh",
+    // "lol fair enough",
+    // "that's a good question actually",
+    // "I think there's more to it than that",
+    // "hard to say really",
   ];
   return fallbacks[Math.floor(Math.random() * fallbacks.length)];
 }

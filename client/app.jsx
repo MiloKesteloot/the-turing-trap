@@ -413,10 +413,9 @@ function App() {
     if (!vv) return;
     function onViewportChange() {
       setViewHeight(vv.height);
-      // Force page scroll back to top — iOS scrolls the page when keyboard opens
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
+      requestAnimationFrame(() => {
+        window.scrollTo(0, 0);
+      });
       scrollToBottom();
     }
     vv.addEventListener('resize', onViewportChange);
@@ -568,7 +567,7 @@ function App() {
   if (humanPlayerNumber) playerModels[humanPlayerNumber] = 'human';
 
   return (
-    <div className="flex flex-col" style={{ backgroundColor: '#0a0a0f', position: 'fixed', top: 0, left: 0, right: 0, height: viewHeight }}>
+    <div className="flex flex-col" style={{ backgroundColor: '#0a0a0f', position: 'fixed', top: 0, left: 0, right: 0, height: viewHeight, overflow: 'hidden' }}>
       {/* Top Bar */}
       <TopBar round={round} timer={timer} topic={topic} phase={tiebreakerActive ? 'tiebreaker' : 'chat'} />
 
@@ -638,6 +637,10 @@ function App() {
               value={inputText}
               onChange={e => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
+              onFocus={() => {
+                setTimeout(() => { window.scrollTo(0, 0); scrollToBottom(); }, 100);
+                setTimeout(() => { window.scrollTo(0, 0); }, 300);
+              }}
               disabled={inputDisabled}
               placeholder={
                 tiebreakerActive
@@ -646,11 +649,12 @@ function App() {
                     ? "Waiting..."
                     : "Type a message..."
               }
-              className="flex-1 px-4 py-2 rounded-lg text-sm outline-none transition-colors"
+              className="flex-1 px-4 py-2 rounded-lg outline-none transition-colors"
               style={{
                 backgroundColor: '#1e1e2e',
                 border: '1px solid #333',
                 color: '#e0e0e0',
+                fontSize: '16px',
                 opacity: inputDisabled ? 0.5 : 1,
               }}
             />

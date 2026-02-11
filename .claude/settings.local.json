@@ -5,7 +5,13 @@
       "Bash(node -c:*)",
       "Bash(timeout 5 node:*)",
       "Bash(node -e:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "WebFetch(domain:www.franciscomoretti.com)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:saricden.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:tkte.ch)",
+      "WebFetch(domain:www.tutorialpedia.org)"
     ]
   }
 }

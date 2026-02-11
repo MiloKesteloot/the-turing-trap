@@ -122,7 +122,7 @@ function VoteMessage({ msg, playerModels }) {
               Player {msg.votedFor}
             </span>
             <span className="opacity-70">
-              {' — '}{msg.text.replace(/^["']?I vote for Player \d+!?\s*["']?\s*/i, '').replace(/^["']+|["']+$/g, '')}
+              {' — '}{msg.text.replace(/^I vote for Player \d+!?\s*/i, '')}
             </span>
           </div>
         </div>
@@ -245,6 +245,48 @@ function EliminationMessage({ msg }) {
   );
 }
 
+// ─── Voting Status Panel ───
+function VotingStatusPanel({ votingStatus, playerModels }) {
+  if (!votingStatus) return null;
+  const { voters, ready } = votingStatus;
+
+  return (
+    <div className="flex justify-center px-4 py-4 msg-enter">
+      <div className="w-full max-w-sm rounded-xl p-4" style={{ backgroundColor: '#151525', border: '1px solid #333' }}>
+        <div className="text-center text-xs font-bold mb-3" style={{ color: '#00d4ff' }}>
+          DELIBERATING...
+        </div>
+        <div className="flex justify-center gap-4">
+          {voters.map(pn => {
+            const done = ready.includes(pn);
+            const model = playerModels?.[pn] || null;
+            return (
+              <div key={pn} className="flex flex-col items-center gap-1">
+                <div className="relative">
+                  <div className={done ? '' : 'voting-pulse'} style={{ opacity: done ? 1 : 0.4 }}>
+                    <Avatar playerNumber={pn} model={model} size={44} />
+                  </div>
+                  {done && (
+                    <div
+                      className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold msg-enter"
+                      style={{ backgroundColor: '#00d4ff', color: '#0a0a0f' }}
+                    >
+                      ✓
+                    </div>
+                  )}
+                </div>
+                <span className="text-xs" style={{ color: PLAYER_COLORS[pn], opacity: done ? 1 : 0.4 }}>
+                  P{pn}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Message Renderer ───
 function Message({ msg, humanPlayerNumber, playerModels }) {
   switch (msg.type) {
@@ -335,6 +377,7 @@ function App() {
   const [gameResult, setGameResult] = useState(null);
   const [tiebreakerActive, setTiebreakerActive] = useState(false);
   const [tiebreakerTiedPlayers, setTiebreakerTiedPlayers] = useState([]);
+  const [votingStatus, setVotingStatus] = useState(null);
 
   const socketRef = useRef(null);
   const chatEndRef = useRef(null);
@@ -375,6 +418,7 @@ function App() {
     });
 
     socket.on('new-message', (msg) => {
+      if (msg.type === 'vote') setVotingStatus(null);
       setMessages(prev => [...prev, msg]);
       scrollToBottom();
     });
@@ -403,6 +447,14 @@ function App() {
       }
     });
 
+    socket.on('voting-start', ({ voters }) => {
+      setVotingStatus({ voters, ready: [] });
+    });
+
+    socket.on('vote-ready', ({ playerNumber }) => {
+      setVotingStatus(prev => prev ? { ...prev, ready: [...prev.ready, playerNumber] } : prev);
+    });
+
     socket.on('tiebreaker-start', ({ tiedPlayers, humanInTie, duration }) => {
       setTiebreakerActive(true);
       setTiebreakerTiedPlayers(tiedPlayers);
@@ -418,6 +470,7 @@ function App() {
       setTopic(t);
       setInputDisabled(false);
       setTiebreakerActive(false);
+      setVotingStatus(null);
       setTypingPlayers([]);
       setInputText('');
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -510,6 +563,10 @@ function App() {
         {messages.map((msg, i) => (
           <Message key={i} msg={msg} humanPlayerNumber={humanPlayerNumber} playerModels={playerModels} />
         ))}
+
+        {votingStatus && (
+          <VotingStatusPanel votingStatus={votingStatus} playerModels={playerModels} />
+        )}
 
         {typingPlayers.map(pn => (
           <TypingIndicator key={`typing-${pn}`} playerNumber={pn} />

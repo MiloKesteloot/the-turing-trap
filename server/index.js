@@ -189,7 +189,7 @@ function buildChatPrompt(playerNumber) {
 
   return `The CURRENT topic for this round is: "${game.topic}"
 IMPORTANT: Only discuss this topic. Ignore any previous topics from earlier rounds.${historySection}
-Write your next message as Player ${playerNumber}. Just write the message text — do not include your player name or any prefix. Keep it under ${maxChars} characters.`;
+Write your next message as Player ${playerNumber}. Just write the message text — do not include your player name or any prefix. Do not wrap your message in quotation marks. Keep it under ${maxChars} characters.`;
 }
 
 function buildVotePrompt(playerNumber) {
@@ -304,7 +304,7 @@ async function callClaude(systemPrompt, userPrompt) {
 async function callGrok(systemPrompt, userPrompt) {
   if (!grokClient) return fallbackResponse();
   const response = await grokClient.chat.completions.create({
-    model: 'grok-4',
+    model: 'grok-3-mini',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
@@ -385,7 +385,6 @@ async function triggerAIMessage(playerNumber) {
 
     // Clean up response — remove any self-prefix like "Player 3: "
     text = text.replace(/^["']?Player\s*\d+["']?\s*[:：]\s*/i, '');
-    text = text.replace(/^["']|["']$/g, '');
 
     if (game && game.phase === 'chat') {
       const msg = { type: 'chat', playerNumber, text, timestamp: Date.now() };
@@ -450,37 +449,38 @@ async function startVotePhase() {
   game.messages.push(systemMsg);
   io.emit('new-message', systemMsg);
 
-  // Fire all vote API calls in parallel
+  // Fire all vote API calls in parallel, emitting progress as each completes
   const aliveAIs = getAliveAIs();
+  const voterNumbers = aliveAIs.map(ai => ai.number);
+  io.emit('voting-start', { voters: voterNumbers });
+
+  game.votes = {};
   const votePromises = aliveAIs.map(async (ai) => {
     const systemPrompt = buildSystemPrompt(ai.number);
     const userPrompt = buildVotePrompt(ai.number);
     const response = await callAI(ai.model, systemPrompt, userPrompt);
-    return { playerNumber: ai.number, response };
-  });
 
-  const voteResults = await Promise.all(votePromises);
-
-  // Parse votes
-  game.votes = {};
-  for (const result of voteResults) {
-    const match = result.response.match(/I vote for Player\s*(\d+)/i);
+    // Parse and store vote immediately
+    const match = response.match(/I vote for Player\s*(\d+)/i);
     let votedFor = match ? parseInt(match[1]) : null;
 
-    // Validate vote - can't vote for self, must be alive player
     const alivePlayers = getAlivePlayers();
     const aliveNumbers = alivePlayers.map(p => p.number);
-    if (!votedFor || votedFor === result.playerNumber || !aliveNumbers.includes(votedFor)) {
-      // Pick a random valid target
-      const validTargets = aliveNumbers.filter(n => n !== result.playerNumber);
+    if (!votedFor || votedFor === ai.number || !aliveNumbers.includes(votedFor)) {
+      const validTargets = aliveNumbers.filter(n => n !== ai.number);
       votedFor = validTargets[Math.floor(Math.random() * validTargets.length)];
     }
 
-    game.votes[result.playerNumber] = {
+    game.votes[ai.number] = {
       votedFor,
-      text: result.response.replace(/^["']+|["']+$/g, ''),
+      text: response,
     };
-  }
+
+    // Notify client this player has finished voting (no vote content revealed yet)
+    io.emit('vote-ready', { playerNumber: ai.number });
+  });
+
+  await Promise.all(votePromises);
 
   // Reveal votes one by one with delay
   const voteEntries = Object.entries(game.votes);
@@ -640,7 +640,7 @@ async function startTiebreaker(tiedPlayerNumbers) {
         votedFor = validTargets[Math.floor(Math.random() * validTargets.length)];
       }
 
-      tbVotes[result.playerNumber] = { votedFor, text: result.response.replace(/^["']+|["']+$/g, '') };
+      tbVotes[result.playerNumber] = { votedFor, text: result.response };
     }
   } else {
     // All remaining players are tied — tied players vote for each other
@@ -665,7 +665,7 @@ async function startTiebreaker(tiedPlayerNumbers) {
         votedFor = validTargets[Math.floor(Math.random() * validTargets.length)];
       }
 
-      tbVotes[result.playerNumber] = { votedFor, text: result.response.replace(/^["']+|["']+$/g, '') };
+      tbVotes[result.playerNumber] = { votedFor, text: result.response };
     }
   }
 

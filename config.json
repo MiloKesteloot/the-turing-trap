@@ -1,6 +1,6 @@
 {
   "testing_mode": false,
-  "round_length_seconds": 120,
+  "round_length_seconds": 10,
   "ai_min_response_time_seconds": 17,
   "ai_max_response_time_seconds": 31,
   "silence_before_ai_starts_seconds": 3,

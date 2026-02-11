@@ -395,6 +395,8 @@ function App() {
   const [tiebreakerTiedPlayers, setTiebreakerTiedPlayers] = useState([]);
   const [votingStatus, setVotingStatus] = useState(null);
 
+  const [viewHeight, setViewHeight] = useState(window.innerHeight);
+
   const socketRef = useRef(null);
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -404,6 +406,18 @@ function App() {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 50);
   }, []);
+
+  // Track visual viewport height for iOS keyboard handling
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    function onResize() {
+      setViewHeight(vv.height);
+      scrollToBottom();
+    }
+    vv.addEventListener('resize', onResize);
+    return () => vv.removeEventListener('resize', onResize);
+  }, [scrollToBottom]);
 
   useEffect(() => {
     const socket = io();
@@ -546,7 +560,7 @@ function App() {
   if (humanPlayerNumber) playerModels[humanPlayerNumber] = 'human';
 
   return (
-    <div className="h-screen flex flex-col" style={{ backgroundColor: '#0a0a0f' }}>
+    <div className="flex flex-col" style={{ backgroundColor: '#0a0a0f', height: viewHeight }}>
       {/* Top Bar */}
       <TopBar round={round} timer={timer} topic={topic} phase={tiebreakerActive ? 'tiebreaker' : 'chat'} />
 

@@ -411,12 +411,20 @@ function App() {
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
-    function onResize() {
+    function onViewportChange() {
       setViewHeight(vv.height);
+      // Force page scroll back to top — iOS scrolls the page when keyboard opens
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
       scrollToBottom();
     }
-    vv.addEventListener('resize', onResize);
-    return () => vv.removeEventListener('resize', onResize);
+    vv.addEventListener('resize', onViewportChange);
+    vv.addEventListener('scroll', onViewportChange);
+    return () => {
+      vv.removeEventListener('resize', onViewportChange);
+      vv.removeEventListener('scroll', onViewportChange);
+    };
   }, [scrollToBottom]);
 
   useEffect(() => {

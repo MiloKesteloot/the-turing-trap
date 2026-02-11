@@ -77,7 +77,9 @@ function ChatMessage({ msg, humanPlayerNumber, playerModels }) {
   return (
     <div className={`flex ${isHuman ? 'justify-end' : 'justify-start'} px-4 py-1 msg-enter`}>
       <div className={`flex items-start gap-2 max-w-[75%] ${isHuman ? 'flex-row-reverse' : 'flex-row'}`}>
-        <Avatar playerNumber={msg.playerNumber} model={model} size={40} />
+        <div className={isHuman ? "chat-avatar-human" : "chat-avatar msg-avatar"}>
+          <Avatar playerNumber={msg.playerNumber} model={model} size={40} />
+        </div>
         <div>
           <div className={`text-xs mb-0.5 ${isHuman ? 'text-right' : 'text-left'}`} style={{ color }}>
             Player {msg.playerNumber}
@@ -114,7 +116,9 @@ function VoteMessage({ msg, playerModels }) {
   return (
     <div className="flex justify-start px-4 py-1 msg-enter">
       <div className="flex items-start gap-2 max-w-[80%]">
-        <Avatar playerNumber={msg.playerNumber} model={model} size={40} />
+        <div className="msg-avatar">
+          <Avatar playerNumber={msg.playerNumber} model={model} size={40} />
+        </div>
         <div>
           <div className="text-xs mb-0.5" style={{ color: voterColor }}>
             Player {msg.playerNumber}
@@ -200,7 +204,9 @@ function TiebreakerMessage({ msg, playerModels }) {
   return (
     <div className="flex justify-start px-4 py-1 msg-enter">
       <div className="flex items-start gap-2 max-w-[85%]">
-        <Avatar playerNumber={msg.playerNumber} model={model} size={40} />
+        <div className="msg-avatar">
+          <Avatar playerNumber={msg.playerNumber} model={model} size={40} />
+        </div>
         <div>
           <div className="text-xs mb-0.5" style={{ color }}>
             Player {msg.playerNumber} <span className="opacity-50">(tiebreaker)</span>
@@ -233,7 +239,9 @@ function EliminationMessage({ msg }) {
           <span className="opacity-60">Player {msg.playerNumber} was...</span>
         </div>
         <div className="flex items-center justify-center gap-3 mb-2">
-          <Avatar playerNumber={msg.playerNumber} model={msg.isHuman ? 'human' : msg.model} revealed size={56} />
+          <div className="msg-avatar">
+            <Avatar playerNumber={msg.playerNumber} model={msg.isHuman ? 'human' : msg.model} revealed size={56} />
+          </div>
           <span
             className="text-xl font-bold"
             style={{ color }}
@@ -269,7 +277,7 @@ function VotingStatusPanel({ votingStatus, playerModels }) {
             return (
               <div key={pn} className="flex flex-col items-center gap-1">
                 <div className="relative">
-                  <div className={done ? '' : 'voting-pulse'} style={{ opacity: done ? 1 : 0.4 }}>
+                  <div className={`msg-avatar ${done ? '' : 'voting-pulse'}`} style={{ opacity: done ? 1 : 0.4 }}>
                     <Avatar playerNumber={pn} model={model} size={44} />
                   </div>
                   {done && (
@@ -352,7 +360,7 @@ function TopBar({ round, timer, topic, phase }) {
 
   return (
     <div className="border-b" style={{ backgroundColor: '#0e0e18', borderColor: '#222' }}>
-      <div className="flex items-center justify-between px-6 py-3">
+      <div className="topbar-row flex items-center justify-between px-6 py-3">
         <div className="text-base font-bold" style={{ color: '#00d4ff' }}>
           ROUND {round}
         </div>
@@ -543,7 +551,7 @@ function App() {
       <TopBar round={round} timer={timer} topic={topic} phase={tiebreakerActive ? 'tiebreaker' : 'chat'} />
 
       {/* Player Status Bar */}
-      <div className="flex items-center justify-center gap-3 px-4 py-1.5" style={{ backgroundColor: '#0c0c16' }}>
+      <div className="player-status-bar flex items-center justify-center gap-3 px-4 py-1.5" style={{ backgroundColor: '#0c0c16' }}>
         {players.map(p => {
           const alive = p.alive !== false;
           const color = PLAYER_COLORS[p.number];

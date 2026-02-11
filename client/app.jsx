@@ -560,7 +560,7 @@ function App() {
   if (humanPlayerNumber) playerModels[humanPlayerNumber] = 'human';
 
   return (
-    <div className="flex flex-col" style={{ backgroundColor: '#0a0a0f', height: viewHeight }}>
+    <div className="flex flex-col" style={{ backgroundColor: '#0a0a0f', position: 'fixed', top: 0, left: 0, right: 0, height: viewHeight }}>
       {/* Top Bar */}
       <TopBar round={round} timer={timer} topic={topic} phase={tiebreakerActive ? 'tiebreaker' : 'chat'} />
 

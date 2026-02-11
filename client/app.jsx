@@ -1,12 +1,8 @@
 const { useState, useEffect, useRef, useCallback } = React;
 
-const PLAYER_COLORS = {
-  1: '#ff6b6b',
-  2: '#4ecdc4',
-  3: '#ffe66d',
-  4: '#a29bfe',
-  5: '#fd79a8',
-};
+// Built dynamically from config.json colors when game starts
+// Maps player number → their model's color
+let PLAYER_COLORS = {};
 
 const MODEL_DISPLAY = {
   chatgpt: { name: 'ChatGPT', color: '#10a37f', icon: '/assets/chatgpt.png' },
@@ -18,14 +14,14 @@ const MODEL_DISPLAY = {
 
 // ─── Avatar Component ───
 function Avatar({ playerNumber, model, size = 36 }) {
-  const color = PLAYER_COLORS[playerNumber];
+  const color = PLAYER_COLORS[playerNumber] || '#888';
   if (model) {
     const info = MODEL_DISPLAY[model] || MODEL_DISPLAY.human;
     return (
       <img
         src={info.icon}
         alt={info.name}
-        style={{ width: size, height: size, borderRadius: '50%', border: `2px solid ${info.color}`, flexShrink: 0 }}
+        style={{ width: size, height: size, borderRadius: '50%', border: `2px solid ${color}`, flexShrink: 0 }}
       />
     );
   }
@@ -75,7 +71,7 @@ function ChatMessage({ msg, humanPlayerNumber, playerModels }) {
   return (
     <div className={`flex ${isHuman ? 'justify-end' : 'justify-start'} px-4 py-1 msg-enter`}>
       <div className={`flex items-start gap-2 max-w-[75%] ${isHuman ? 'flex-row-reverse' : 'flex-row'}`}>
-        <Avatar playerNumber={msg.playerNumber} model={model} size={32} />
+        <Avatar playerNumber={msg.playerNumber} model={model} size={40} />
         <div>
           <div className={`text-xs mb-0.5 ${isHuman ? 'text-right' : 'text-left'}`} style={{ color }}>
             Player {msg.playerNumber}
@@ -112,7 +108,7 @@ function VoteMessage({ msg, playerModels }) {
   return (
     <div className="flex justify-start px-4 py-1 msg-enter">
       <div className="flex items-start gap-2 max-w-[80%]">
-        <Avatar playerNumber={msg.playerNumber} model={model} size={32} />
+        <Avatar playerNumber={msg.playerNumber} model={model} size={40} />
         <div>
           <div className="text-xs mb-0.5" style={{ color: voterColor }}>
             Player {msg.playerNumber}
@@ -198,7 +194,7 @@ function TiebreakerMessage({ msg, playerModels }) {
   return (
     <div className="flex justify-start px-4 py-1 msg-enter">
       <div className="flex items-start gap-2 max-w-[85%]">
-        <Avatar playerNumber={msg.playerNumber} model={model} size={32} />
+        <Avatar playerNumber={msg.playerNumber} model={model} size={40} />
         <div>
           <div className="text-xs mb-0.5" style={{ color }}>
             Player {msg.playerNumber} <span className="opacity-50">(tiebreaker)</span>
@@ -217,30 +213,30 @@ function TiebreakerMessage({ msg, playerModels }) {
 
 // ─── Elimination Reveal ───
 function EliminationMessage({ msg }) {
-  const info = msg.isHuman ? MODEL_DISPLAY.human : MODEL_DISPLAY[msg.model];
+  const color = PLAYER_COLORS[msg.playerNumber] || '#888';
   return (
     <div className="flex justify-center px-4 py-3 msg-enter">
       <div
         className="w-full max-w-sm rounded-xl p-4 text-center"
         style={{
           backgroundColor: '#151525',
-          border: `2px solid ${msg.isHuman ? '#ff0055' : info?.color || '#666'}`,
+          border: `2px solid ${color}`,
         }}
       >
         <div className="text-lg mb-2">
           <span className="opacity-60">Player {msg.playerNumber} was...</span>
         </div>
         <div className="flex items-center justify-center gap-3 mb-2">
-          <Avatar playerNumber={msg.playerNumber} model={msg.isHuman ? 'human' : msg.model} revealed size={48} />
+          <Avatar playerNumber={msg.playerNumber} model={msg.isHuman ? 'human' : msg.model} revealed size={56} />
           <span
             className="text-xl font-bold"
-            style={{ color: msg.isHuman ? '#ff0055' : info?.color || '#fff' }}
+            style={{ color }}
           >
             {msg.revealName}!
           </span>
         </div>
         {msg.isHuman && (
-          <div className="text-sm mt-2" style={{ color: '#ff0055' }}>
+          <div className="text-sm mt-2" style={{ color }}>
             You've been detected!
           </div>
         )}
@@ -355,6 +351,16 @@ function App() {
     socketRef.current = socket;
 
     socket.on('game-started', (data) => {
+      // Build PLAYER_COLORS from config colors + player assignments
+      const colors = data.colors || {};
+      PLAYER_COLORS = {};
+      data.players.forEach(p => {
+        if (p.model && colors[p.model]) {
+          PLAYER_COLORS[p.number] = colors[p.model];
+        }
+      });
+      PLAYER_COLORS[data.humanPlayerNumber] = colors.human || '#ff0055';
+
       setPhase('playing');
       setHumanPlayerNumber(data.humanPlayerNumber);
       setPlayers(data.players);

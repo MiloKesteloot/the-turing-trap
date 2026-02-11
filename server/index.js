@@ -32,10 +32,16 @@ const grokClient = process.env.XAI_API_KEY && process.env.XAI_API_KEY !== 'your_
   ? new OpenAI.default({ apiKey: process.env.XAI_API_KEY, baseURL: 'https://api.x.ai/v1' })
   : null;
 
+console.log('AI clients loaded:', {
+  openai: !!openai,
+  gemini: !!geminiAI,
+  claude: !!anthropic,
+  grok: !!grokClient,
+});
+
 // --------------- Constants ---------------
 
 const TOPICS = [
-  "What's the best programming language and why?",
   "Is a hot dog a sandwich? Debate.",
   "Plan a group vacation together. Where should we go?",
   "What's the most overrated movie of all time?",
@@ -158,28 +164,32 @@ function buildChatHistoryText() {
 function buildSystemPrompt(playerNumber) {
   const aliveCount = getAlivePlayers().length;
   const activeNames = getActivePlayerNames();
+  const maxChars = loadConfig().ai_max_message_characters || 200;
   return `You are playing a social deduction game in a group chat. You are assigned the name "Player ${playerNumber}". There are ${aliveCount} players currently in the game: ${activeNames}. Four of the players started as AIs, and one is a human pretending to be an AI. You do not know which players are AIs and which is the human.
 
 Your job:
-1. Chat naturally about the given topic
+1. Chat naturally about the CURRENT topic — always respond about the topic shown in the latest prompt, even if the chat history mentions a different topic from a previous round
 2. Try to figure out which player is the human
-3. Be conversational — use short, casual messages like a group chat
+3. Be conversational — use short messages like a group chat
 4. Refer to other players by their player number
 5. Do NOT reveal your actual AI model name or identity
 6. Do NOT say you are an AI directly — just chat like a normal participant
 7. Pay attention to how others write — look for signs of human behavior
+8. Do NOT use emojis
 
-Keep messages short (1-3 sentences typically). Be natural. Sometimes agree, sometimes disagree, sometimes ask questions to other players.`;
+Keep messages under ${maxChars} characters. Be natural. Sometimes agree, sometimes disagree, sometimes ask questions to other players.`;
 }
 
 function buildChatPrompt(playerNumber) {
   const history = buildChatHistoryText();
+  const maxChars = loadConfig().ai_max_message_characters || 200;
   const historySection = history
-    ? `\nHere is the chat so far:\n${history}\n`
+    ? `\nHere is the chat so far this round:\n${history}\n`
     : '\nNo messages have been sent yet. You are starting the conversation.\n';
 
-  return `The current topic is: "${game.topic}"${historySection}
-Write your next message as Player ${playerNumber}. Just write the message text — do not include your player name or any prefix. Keep it short and casual (1-3 sentences).`;
+  return `The CURRENT topic for this round is: "${game.topic}"
+IMPORTANT: Only discuss this topic. Ignore any previous topics from earlier rounds.${historySection}
+Write your next message as Player ${playerNumber}. Just write the message text — do not include your player name or any prefix. Keep it under ${maxChars} characters.`;
 }
 
 function buildVotePrompt(playerNumber) {
@@ -830,12 +840,11 @@ async function startNextRound() {
   game.votes = {};
   game.aiInFlight = {};
   game.tiebreakerResponses = {};
+  game.messages = []; // Clear server-side history so AIs only see the new round's chat
 
   const topic = pickTopic(game.usedTopics);
   game.usedTopics.push(topic);
   game.topic = topic;
-
-  // Clear round-specific messages (keep history for display but add round separator)
   const roundMsg = {
     type: 'system',
     text: `— Round ${game.round} —`,
@@ -873,6 +882,7 @@ io.on('connection', (socket) => {
       topic: game.topic,
       round: game.round,
       roundDuration: getConfig().ROUND_DURATION,
+      colors: loadConfig().colors || {},
     });
 
     startRoundTimer();

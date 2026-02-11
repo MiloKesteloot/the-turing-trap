@@ -233,7 +233,16 @@ function buildTiebreakerVotePrompt(game, playerNumber, tiedPlayerNumbers) {
   const history = buildChatHistoryText(game);
   const tiedNames = tiedPlayerNumbers.map(n => `Player ${n}`).join(', ');
 
-  return `Here is the full chat history and the tiebreaker paragraphs above.
+  const tiebreakerSection = tiedPlayerNumbers
+    .filter(n => game.tiebreakerResponses[n])
+    .map(n => `[Player ${n} tiebreaker]: ${game.tiebreakerResponses[n]}`)
+    .join('\n');
+
+  return `Here is the full chat history:
+${history}
+
+Here are the tiebreaker defense paragraphs:
+${tiebreakerSection}
 
 You must now vote to eliminate one of the tied players: ${tiedNames}. You MUST vote for someone other than yourself (Player ${playerNumber}).
 
@@ -757,6 +766,7 @@ async function revealElimination(game, socket, playerNumber) {
   if (!player) return;
 
   player.alive = false;
+  socket.emit('player-update', game.players.map(p => ({ number: p.number, type: p.type === 'human' ? 'human' : 'ai', model: p.model, alive: p.alive })));
 
   const isHuman = player.type === 'human';
   const revealName = isHuman ? 'THE HUMAN' : getModelDisplayName(player.model);
@@ -812,6 +822,7 @@ async function eliminatePlayer(game, socket, playerNumber) {
   if (!player) return;
 
   player.alive = false;
+  socket.emit('player-update', game.players.map(p => ({ number: p.number, type: p.type === 'human' ? 'human' : 'ai', model: p.model, alive: p.alive })));
 
   const isHuman = player.type === 'human';
   const revealName = isHuman ? 'THE HUMAN' : getModelDisplayName(player.model);

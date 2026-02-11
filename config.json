@@ -1,5 +1,5 @@
 {
-  "testing_mode": true,
+  "testing_mode": false,
   "round_length_seconds": 90,
   "ai_min_response_time_seconds": 17,
   "ai_max_response_time_seconds": 31,

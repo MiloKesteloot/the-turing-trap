@@ -925,6 +925,14 @@ async function startNextRound(game, socket) {
   game.messages.push(roundMsg);
   socket.emit('new-message', roundMsg);
 
+  const topicMsg = {
+    type: 'system',
+    text: `New topic: ${game.topic}`,
+    timestamp: Date.now(),
+  };
+  game.messages.push(topicMsg);
+  socket.emit('new-message', topicMsg);
+
   socket.emit('new-round', { round: game.round, topic: game.topic });
 
   startRoundTimer(game, socket);
